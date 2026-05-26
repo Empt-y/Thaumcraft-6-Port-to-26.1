@@ -1,71 +1,65 @@
 package thaumcraft;
-import java.io.File;
-import net.minecraft.command.ICommand;
-import net.minecraftforge.common.config.Config;
-import net.minecraftforge.common.config.ConfigManager;
-import net.minecraftforge.fluids.FluidRegistry;
-import net.minecraftforge.fml.client.event.ConfigChangedEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.SidedProxy;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLInterModComms;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import thaumcraft.api.ThaumcraftApi;
+import thaumcraft.common.config.ConfigAspects;
+import thaumcraft.common.config.ConfigEntities;
+import thaumcraft.common.config.ConfigItems;
+import thaumcraft.common.config.ConfigRecipes;
+import thaumcraft.common.config.ConfigResearch;
+import thaumcraft.common.config.ModConfig;
 import thaumcraft.common.lib.CommandThaumcraft;
-import thaumcraft.proxies.IProxy;
+import thaumcraft.common.lib.InternalMethodHandler;
+import thaumcraft.common.lib.capabilities.PlayerKnowledge;
+import thaumcraft.common.lib.capabilities.PlayerWarp;
+import thaumcraft.common.lib.network.PacketHandler;
 
+@Mod(Thaumcraft.MODID)
+public class Thaumcraft {
 
-@Mod(modid = "thaumcraft", name = "Thaumcraft", version = "6.1.BETA26", dependencies = "required-after:forge@[14.23.5.2768,);required-after:baubles@[1.5.2,)", acceptedMinecraftVersions = "[1.12.2]")
-public class Thaumcraft
-{
-    public static String MODID = "thaumcraft";
-    public static String MODNAME = "Thaumcraft";
-    public static String VERSION = "6.1.BETA26";
-    @SidedProxy(clientSide = "thaumcraft.proxies.ClientProxy", serverSide = "thaumcraft.proxies.ServerProxy")
-    public static IProxy proxy;
-    @Mod.Instance("thaumcraft")
-    public static Thaumcraft instance;
-    public File modDir;
-    public static Logger log;
-    
-    @Mod.EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
-        Thaumcraft.proxy.preInit(event);
+    public static final String MODID = "thaumcraft";
+    public static Logger log = LogManager.getLogger("THAUMCRAFT");
+
+    public Thaumcraft(IEventBus modEventBus) {
+        modEventBus.addListener(this::commonSetup);
+        modEventBus.addListener(this::loadComplete);
+        modEventBus.addListener(PacketHandler::register);
+
+        ThaumcraftApi.internalMethods = new InternalMethodHandler();
+        PlayerKnowledge.preInit();
+        PlayerWarp.preInit();
+
+        NeoForge.EVENT_BUS.addListener(this::onServerStarting);
     }
-    
-    @Mod.EventHandler
-    public void init(FMLInitializationEvent event) {
-        Thaumcraft.proxy.init(event);
+
+    private void commonSetup(FMLCommonSetupEvent event) {
+        event.enqueueWork(() -> {
+            ConfigItems.init();
+            ConfigResearch.init();
+            ConfigRecipes.initializeSmelting();
+        });
     }
-    
-    @Mod.EventHandler
-    public void postInit(FMLPostInitializationEvent event) {
-        Thaumcraft.proxy.postInit(event);
+
+    private void loadComplete(FMLLoadCompleteEvent event) {
+        event.enqueueWork(() -> {
+            ConfigEntities.postInitEntitySpawns();
+            ConfigAspects.postInit();
+            ConfigRecipes.postAspects();
+            ModConfig.postInitLoot();
+            ModConfig.postInitMisc();
+            ConfigRecipes.compileGroups();
+            ConfigResearch.postInit();
+        });
     }
-    
-    @Mod.EventHandler
-    public void serverLoad(FMLServerStartingEvent event) {
-        event.registerServerCommand(new CommandThaumcraft());
-    }
-    
-    @Mod.EventHandler
-    public void interModComs(FMLInterModComms.IMCEvent event) {
-        Thaumcraft.proxy.checkInterModComs(event);
-    }
-    
-    @SubscribeEvent
-    public void onConfigChangedEvent(ConfigChangedEvent.OnConfigChangedEvent event) {
-        if (event.getModID().equals("thaumcraft")) {
-            ConfigManager.sync("thaumcraft", Config.Type.INSTANCE);
-        }
-    }
-    
-    static {
-        log = LogManager.getLogger("thaumcraft".toUpperCase());
-        FluidRegistry.enableUniversalBucket();
+
+    private void onServerStarting(ServerStartingEvent event) {
+        // TODO: register command via Commands.register once command class is ported
     }
 }
