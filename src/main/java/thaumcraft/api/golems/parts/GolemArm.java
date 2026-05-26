@@ -1,10 +1,8 @@
 package thaumcraft.api.golems.parts;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.IRangedAttackMob;
-import net.minecraft.entity.ai.EntityAIAttackRanged;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.translation.I18n;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.resources.language.I18n;
 import thaumcraft.api.golems.EnumGolemTrait;
 import thaumcraft.api.golems.IGolemAPI;
 
@@ -15,14 +13,14 @@ public class GolemArm
     public byte id;
     public String key;
     public String[] research;
-    public ResourceLocation icon;
+    public Identifier icon;
     public Object[] components;
     public EnumGolemTrait[] traits;
     public IArmFunction function;
     public PartModel model;
     private static byte lastID;
     
-    public GolemArm(String key, String[] research, ResourceLocation icon, PartModel model, Object[] comp, EnumGolemTrait[] tags) {
+    public GolemArm(String key, String[] research, Identifier icon, PartModel model, Object[] comp, EnumGolemTrait[] tags) {
         this.key = key;
         this.research = research;
         this.icon = icon;
@@ -32,7 +30,7 @@ public class GolemArm
         function = null;
     }
     
-    public GolemArm(String key, String[] research, ResourceLocation icon, PartModel model, Object[] comp, IArmFunction function, EnumGolemTrait[] tags) {
+    public GolemArm(String key, String[] research, Identifier icon, PartModel model, Object[] comp, IArmFunction function, EnumGolemTrait[] tags) {
         this(key, research, icon, model, comp, tags);
         this.function = function;
     }
@@ -49,11 +47,11 @@ public class GolemArm
     }
     
     public String getLocalizedName() {
-        return I18n.translateToLocal("golem.arm." + key.toLowerCase());
+        return I18n.get("golem.arm." + key.toLowerCase());
     }
     
     public String getLocalizedDescription() {
-        return I18n.translateToLocal("golem.arm.text." + key.toLowerCase());
+        return I18n.get("golem.arm.text." + key.toLowerCase());
     }
     
     public static GolemArm[] getArms() {
@@ -69,8 +67,9 @@ public class GolemArm
     {
         void onMeleeAttack(IGolemAPI p0, Entity p1);
         
-        void onRangedAttack(IGolemAPI p0, EntityLivingBase p1, float p2);
+        void onRangedAttack(IGolemAPI p0, LivingEntity p1, float p2);
         
-        EntityAIAttackRanged getRangedAttackAI(IRangedAttackMob p0);
+        // TODO: getRangedAttackAI - entity AI goal types changed in NeoForge
+        Object getRangedAttackAI(Object p0);
     }
 }

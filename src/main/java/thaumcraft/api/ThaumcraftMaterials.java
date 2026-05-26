@@ -1,45 +1,32 @@
 package thaumcraft.api;
-import net.minecraft.block.material.MapColor;
-import net.minecraft.block.material.Material;
-import net.minecraft.init.SoundEvents;
-import net.minecraft.item.Item.ToolMaterial;
-import net.minecraft.item.ItemArmor.ArmorMaterial;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.common.util.EnumHelper;
-import thaumcraft.api.items.ItemsTC;
 
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.item.ToolMaterial;
 
+/**
+ * Thaumcraft tool material definitions (MC 1.21.4 ToolMaterial record).
+ * ToolMaterial(incorrectBlocksForDrops, durability, speed, attackDmgBonus, enchantability, repairItems)
+ */
 public class ThaumcraftMaterials {
 
-	public static ToolMaterial TOOLMAT_THAUMIUM = EnumHelper.addToolMaterial("THAUMIUM", 3, 500, 7F, 2.5f, 22).setRepairItem(new ItemStack(ItemsTC.ingots));
-	public static ToolMaterial TOOLMAT_VOID = EnumHelper.addToolMaterial("VOID", 4, 150, 8F, 3, 10).setRepairItem(new ItemStack(ItemsTC.ingots,1,1));
-	public static ToolMaterial TOOLMAT_ELEMENTAL = EnumHelper.addToolMaterial("THAUMIUM_ELEMENTAL", 3, 1500, 9F, 3, 18).setRepairItem(new ItemStack(ItemsTC.ingots));
-	public static ArmorMaterial ARMORMAT_THAUMIUM = EnumHelper.addArmorMaterial("THAUMIUM","THAUMIUM", 25, new int[] { 2, 5, 6, 2 }, 25, SoundEvents.ITEM_ARMOR_EQUIP_IRON, 1.0F);
-	public static ArmorMaterial ARMORMAT_SPECIAL = EnumHelper.addArmorMaterial("SPECIAL","SPECIAL", 25, new int[] { 1, 2, 3, 1 }, 25, SoundEvents.ITEM_ARMOR_EQUIP_LEATHER, 1.0F);
-	public static ArmorMaterial ARMORMAT_VOID = EnumHelper.addArmorMaterial("VOID","VOID", 10, new int[] { 3, 6, 8, 3 }, 10, SoundEvents.ITEM_ARMOR_EQUIP_CHAIN, 1F);
-	public static ArmorMaterial ARMORMAT_VOIDROBE = EnumHelper.addArmorMaterial("VOIDROBE","VOIDROBE", 18, new int[] { 4, 7, 9, 4 }, 10, SoundEvents.ITEM_ARMOR_EQUIP_LEATHER, 2f);
-	public static ArmorMaterial ARMORMAT_FORTRESS = EnumHelper.addArmorMaterial("FORTRESS","FORTRESS", 40, new int[] { 3, 6, 7, 3 }, 25, SoundEvents.ITEM_ARMOR_EQUIP_IRON, 3f);
-	public static ArmorMaterial ARMORMAT_CULTIST_PLATE = EnumHelper.addArmorMaterial("CULTIST_PLATE","CULTIST_PLATE", 18, new int[]{2, 5, 6, 2}, 13, SoundEvents.ITEM_ARMOR_EQUIP_IRON, 0.0F);
-	public static ArmorMaterial ARMORMAT_CULTIST_ROBE = EnumHelper.addArmorMaterial("CULTIST_ROBE","CULTIST_ROBE", 17, new int[]{2, 4, 5, 2}, 13, SoundEvents.ITEM_ARMOR_EQUIP_CHAIN, 0.0F);
-	public static ArmorMaterial ARMORMAT_CULTIST_LEADER = EnumHelper.addArmorMaterial("CULTIST_LEADER","CULTIST_LEADER", 30, new int[] { 3, 6, 7, 3 }, 20, SoundEvents.ITEM_ARMOR_EQUIP_IRON, 1F);
-	
-	
-	public static Material MATERIAL_TAINT = new MaterialTaint();
-	
-	public static class MaterialTaint extends Material
-	{
-	    public MaterialTaint()
-	    {
-	        super(MapColor.PURPLE);
-	        setNoPushMobility();
-	    }	    
-	    
-	    @Override
-	    public boolean blocksMovement()
-	    {
-	        return true;
-	    }
-	    	    
-	}
-	
+    public static final ToolMaterial TOOLMAT_THAUMIUM = new ToolMaterial(
+        BlockTags.INCORRECT_FOR_IRON_TOOL, 500, 7.0f, 2.5f, 22, ItemTags.IRON_TOOL_MATERIALS);
+
+    public static final ToolMaterial TOOLMAT_VOID = new ToolMaterial(
+        BlockTags.INCORRECT_FOR_DIAMOND_TOOL, 150, 8.0f, 3.0f, 10, ItemTags.DIAMOND_TOOL_MATERIALS);
+
+    public static final ToolMaterial TOOLMAT_ELEMENTAL = new ToolMaterial(
+        BlockTags.INCORRECT_FOR_IRON_TOOL, 1500, 9.0f, 3.0f, 18, ItemTags.IRON_TOOL_MATERIALS);
+
+    // Armor material keys — actual registration deferred to a DeferredRegister setup class
+    public static final String ARMORMAT_THAUMIUM_KEY   = "thaumcraft:thaumium";
+    public static final String ARMORMAT_SPECIAL_KEY    = "thaumcraft:special";
+    public static final String ARMORMAT_VOID_KEY       = "thaumcraft:void";
+    public static final String ARMORMAT_VOIDROBE_KEY   = "thaumcraft:voidrobe";
+    public static final String ARMORMAT_FORTRESS_KEY   = "thaumcraft:fortress";
+    public static final String ARMORMAT_CULTIST_PLATE_KEY  = "thaumcraft:cultist_plate";
+    public static final String ARMORMAT_CULTIST_ROBE_KEY   = "thaumcraft:cultist_robe";
+    public static final String ARMORMAT_CULTIST_LEADER_KEY = "thaumcraft:cultist_leader";
 }

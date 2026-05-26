@@ -1,36 +1,40 @@
 package thaumcraft.api.research;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Block;
 
 
+// TODO: Material was removed in 1.20; this class needs to be replaced with tag-based block scanning
 public class ScanMaterial implements IScanThing {
-	
-	String research;	
-	Material[] mats;
-	
-	public ScanMaterial(Material mat) {
-		research = "!"+mat.getClass().getTypeName();
-		mats = new Material[] {mat};
-	}
 
-	public ScanMaterial(String research, Material ... mats) {
-		this.research = research;
-		this.mats = mats;
-	}
-	
-	@Override
-	public boolean checkThing(EntityPlayer player, Object obj) {		
-		if (obj!=null && obj instanceof BlockPos) {
-			for (Material mat:mats) 
-				if (player.world.getBlockState((BlockPos) obj).getMaterial()==mat) 
-					return true;
-		}
-		return false;
-	}
-	
-	@Override
-	public String getResearchKey(EntityPlayer player, Object object) {		
-		return research;
-	}
+    String research;
+    TagKey<Block>[] tags;
+
+    @SuppressWarnings("unchecked")
+    public ScanMaterial(TagKey<Block> tag) {
+        research = "!tag." + tag.location();
+        this.tags = new TagKey[]{tag};
+    }
+
+    @SuppressWarnings("unchecked")
+    public ScanMaterial(String research, TagKey<Block>... tags) {
+        this.research = research;
+        this.tags = tags;
+    }
+
+    @Override
+    public boolean checkThing(Player player, Object obj) {
+        if (obj instanceof BlockPos pos) {
+            for (TagKey<Block> tag : tags) {
+                if (player.level().getBlockState(pos).is(tag)) return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public String getResearchKey(Player player, Object object) {
+        return research;
+    }
 }

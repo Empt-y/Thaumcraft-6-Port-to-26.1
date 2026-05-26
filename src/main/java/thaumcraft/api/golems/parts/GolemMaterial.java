@@ -1,7 +1,7 @@
 package thaumcraft.api.golems.parts;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.translation.I18n;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.resources.language.I18n;
 import thaumcraft.api.golems.EnumGolemTrait;
 
 
@@ -11,7 +11,7 @@ public class GolemMaterial
     public byte id;
     public String key;
     public String[] research;
-    public ResourceLocation texture;
+    public Identifier texture;
     public int itemColor;
     public int healthMod;
     public int armor;
@@ -21,7 +21,7 @@ public class GolemMaterial
     public EnumGolemTrait[] traits;
     private static byte lastID;
     
-    public GolemMaterial(String key, String[] research, ResourceLocation texture, int itemColor, int hp, int armor, int damage, ItemStack compb, ItemStack compm, EnumGolemTrait[] tags) {
+    public GolemMaterial(String key, String[] research, Identifier texture, int itemColor, int hp, int armor, int damage, ItemStack compb, ItemStack compm, EnumGolemTrait[] tags) {
         this.key = key;
         this.research = research;
         this.texture = texture;
@@ -46,11 +46,11 @@ public class GolemMaterial
     }
     
     public String getLocalizedName() {
-        return I18n.translateToLocal("golem.material." + key.toLowerCase());
+        return I18n.get("golem.material." + key.toLowerCase());
     }
     
     public String getLocalizedDescription() {
-        return I18n.translateToLocal("golem.material.text." + key.toLowerCase());
+        return I18n.get("golem.material.text." + key.toLowerCase());
     }
     
     public static GolemMaterial[] getMaterials() {

@@ -1,6 +1,6 @@
 package thaumcraft.api.golems.parts;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.translation.I18n;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.resources.language.I18n;
 import thaumcraft.api.golems.EnumGolemTrait;
 
 
@@ -10,14 +10,14 @@ public class GolemAddon
     public byte id;
     public String key;
     public String[] research;
-    public ResourceLocation icon;
+    public Identifier icon;
     public Object[] components;
     public EnumGolemTrait[] traits;
     public IAddonFunction function;
     public PartModel model;
     private static byte lastID;
     
-    public GolemAddon(String key, String[] research, ResourceLocation icon, PartModel model, Object[] comp, EnumGolemTrait[] tags) {
+    public GolemAddon(String key, String[] research, Identifier icon, PartModel model, Object[] comp, EnumGolemTrait[] tags) {
         this.key = key;
         this.research = research;
         this.icon = icon;
@@ -27,7 +27,7 @@ public class GolemAddon
         function = null;
     }
     
-    public GolemAddon(String key, String[] research, ResourceLocation icon, PartModel model, Object[] comp, IAddonFunction function, EnumGolemTrait[] tags) {
+    public GolemAddon(String key, String[] research, Identifier icon, PartModel model, Object[] comp, IAddonFunction function, EnumGolemTrait[] tags) {
         this(key, research, icon, model, comp, tags);
         this.function = function;
     }
@@ -44,11 +44,11 @@ public class GolemAddon
     }
     
     public String getLocalizedName() {
-        return I18n.translateToLocal("golem.addon." + key.toLowerCase());
+        return I18n.get("golem.addon." + key.toLowerCase());
     }
     
     public String getLocalizedDescription() {
-        return I18n.translateToLocal("golem.addon.text." + key.toLowerCase());
+        return I18n.get("golem.addon.text." + key.toLowerCase());
     }
     
     public static GolemAddon[] getAddons() {

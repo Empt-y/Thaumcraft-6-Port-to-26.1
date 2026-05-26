@@ -3,12 +3,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.util.EntitySelectors;
-import net.minecraft.world.World;
-import net.minecraftforge.common.DimensionManager;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.level.Level;
+// DimensionManager removed - world reference must be passed at runtime
 
 
 
@@ -19,8 +20,8 @@ public class FocusPackage implements IFocusElement {
 		return null;
 	}
 	
-	public World world;
-	private EntityLivingBase caster;	
+	public Level world;
+	private LivingEntity caster;	
 	private UUID casterUUID;
 	
 	private float power = 1;
@@ -33,11 +34,11 @@ public class FocusPackage implements IFocusElement {
 	
 	public FocusPackage() {	}
 
-	public FocusPackage(EntityLivingBase caster) {
+	public FocusPackage(LivingEntity caster) {
 		super();
-		world = caster.world;
+		world = caster.level();
 		this.caster = caster;
-		casterUUID = caster.getUniqueID();
+		casterUUID = caster.getUUID();
 	}	
 		
 	@Override
@@ -79,7 +80,7 @@ public class FocusPackage implements IFocusElement {
 	}
 	
 	public UUID getCasterUUID() {
-		if (caster!=null) casterUUID = caster.getUniqueID();
+		if (caster!=null) casterUUID = caster.getUUID();
 		return casterUUID;
 	}
 
@@ -87,18 +88,14 @@ public class FocusPackage implements IFocusElement {
 		this.casterUUID = casterUUID;
 	}	
 	
-	public EntityLivingBase getCaster() {
+	public LivingEntity getCaster() {
 		try {
 			if (caster==null) {
-				caster = world.getPlayerEntityByUUID(getCasterUUID());
+				caster = world.getPlayerByUUID(getCasterUUID());
 			}
 			if (caster==null) {
-				for (EntityLivingBase e : world.getEntities(EntityLivingBase.class, EntitySelectors.IS_ALIVE)) {
-					if (getCasterUUID().equals(e.getUniqueID())) {
-						caster = e;
-						break;
-					}
-				}
+				Entity found = world.getEntity(getCasterUUID());
+				if (found instanceof LivingEntity le) caster = le;
 			}
 		} catch (Exception e) {}
 		return caster;
@@ -126,38 +123,38 @@ public class FocusPackage implements IFocusElement {
 		return out.toArray(new FocusEffect[]{});
 	}
 
-	public void deserialize(NBTTagCompound nbt) {
-		uid = nbt.getUniqueId("uid");		
-		index = nbt.getInteger("index");
-		int dim = nbt.getInteger("dim");
-		world = DimensionManager.getWorld(dim);
-		setCasterUUID(nbt.getUniqueId("casterUUID"));
-		power = nbt.getFloat("power");
-		complexity = nbt.getInteger("complexity");
+	public void deserialize(CompoundTag nbt) {
+		uid = nbt.contains("uid") ? net.minecraft.core.UUIDUtil.uuidFromIntArray(nbt.getIntArray("uid").orElse(new int[4])) : null;
+		index = nbt.getIntOr("index", 0);
+		int dim = nbt.getIntOr("dim", 0);
+		world = null /* TODO: DimensionManager removed */;
+		setCasterUUID(nbt.contains("casterUUID") ? net.minecraft.core.UUIDUtil.uuidFromIntArray(nbt.getIntArray("casterUUID").orElse(new int[4])) : null);
+		power = nbt.getFloatOr("power", 0.0f);
+		complexity = nbt.getIntOr("complexity", 0);
 				
-		NBTTagList nodelist = nbt.getTagList("nodes", (byte)10);
+		ListTag nodelist = nbt.getListOrEmpty("nodes");
 		nodes.clear();
-		for (int x=0;x<nodelist.tagCount();x++) {
-			NBTTagCompound nodenbt = nodelist.getCompoundTagAt(x);
-			EnumUnitType ut = EnumUnitType.valueOf(nodenbt.getString("type"));
+		for (int x=0;x<nodelist.size();x++) {
+			CompoundTag nodenbt = nodelist.getCompoundOrEmpty(x);
+			EnumUnitType ut = EnumUnitType.valueOf(nodenbt.getStringOr("type", ""));
 			if (ut!=null) {
 				if (ut==EnumUnitType.PACKAGE) {
 					FocusPackage fp = new FocusPackage();
-					fp.deserialize(nodenbt.getCompoundTag("package"));
+					fp.deserialize(nodenbt.getCompoundOrEmpty("package"));
 					nodes.add(fp);
 					break;
 				} else {
-					IFocusElement fn = FocusEngine.getElement(nodenbt.getString("key")); 
+					IFocusElement fn = FocusEngine.getElement(nodenbt.getStringOr("key", "")); 
 					if (fn!=null) {						
 						if (fn instanceof FocusNode) {
 							((FocusNode)fn).initialize();
 							if (((FocusNode)fn).getSettingList()!=null)
 								for (String ns : ((FocusNode)fn).getSettingList()) {
-									((FocusNode)fn).getSetting(ns).setValue(nodenbt.getInteger("setting."+ns));
+									((FocusNode)fn).getSetting(ns).setValue(nodenbt.getIntOr("setting."+ns, 0));
 								}
 							
 							if (fn instanceof FocusModSplit) {								
-								((FocusModSplit)fn).deserialize(nodenbt.getCompoundTag("packages"));		
+								((FocusModSplit)fn).deserialize(nodenbt.getCompoundOrEmpty("packages"));		
 							}
 						}
 						addNode(fn);
@@ -168,40 +165,40 @@ public class FocusPackage implements IFocusElement {
 		
 	}
 
-	public NBTTagCompound serialize() {
-		NBTTagCompound nbt = new NBTTagCompound();
-		if (uid!=null) nbt.setUniqueId("uid", uid);
-		nbt.setInteger("index", index);
-		if (getCasterUUID() != null) nbt.setUniqueId("casterUUID", getCasterUUID());
-		if (world!=null) nbt.setInteger("dim", world.provider.getDimension());
-		nbt.setFloat("power", power);
-		nbt.setInteger("complexity", complexity);
+	public CompoundTag serialize() {
+		CompoundTag nbt = new CompoundTag();
+		if (uid!=null) nbt.putIntArray("uid", net.minecraft.core.UUIDUtil.uuidToIntArray(uid));
+		nbt.putInt("index", index);
+		if (getCasterUUID() != null) nbt.putIntArray("casterUUID", net.minecraft.core.UUIDUtil.uuidToIntArray(getCasterUUID()));
+		if (world!=null) nbt.putInt("dim", (world instanceof net.minecraft.server.level.ServerLevel ? ((net.minecraft.server.level.ServerLevel)world).dimension().identifier().hashCode() : 0));
+		nbt.putFloat("power", power);
+		nbt.putInt("complexity", complexity);
 		
 		//nodes
-		NBTTagList nodelist = new NBTTagList();
+		ListTag nodelist = new ListTag();
 		synchronized (nodes) {
 			for (IFocusElement node:nodes) {
 				if (node==null || node.getType()==null) continue;
-				NBTTagCompound nodenbt = new NBTTagCompound();
-				nodenbt.setString("type", node.getType().name());
-				nodenbt.setString("key", node.getKey());
+				CompoundTag nodenbt = new CompoundTag();
+				nodenbt.putString("type", node.getType().name());
+				nodenbt.putString("key", node.getKey());
 				if (node.getType()==EnumUnitType.PACKAGE) {
-					nodenbt.setTag("package", ((FocusPackage)node).serialize());
-					nodelist.appendTag(nodenbt);
+					nodenbt.put("package", ((FocusPackage)node).serialize());
+					nodelist.add(nodenbt);
 					break;
 				} else {				
 					if (node instanceof FocusNode && ((FocusNode)node).getSettingList()!=null)
 						for (String ns : ((FocusNode)node).getSettingList()) {
-							nodenbt.setInteger("setting."+ns, ((FocusNode)node).getSettingValue(ns));
+							nodenbt.putInt("setting."+ns, ((FocusNode)node).getSettingValue(ns));
 						}
 					if (node instanceof FocusModSplit) {	
-						nodenbt.setTag("packages", ((FocusModSplit)node).serialize());	
+						nodenbt.put("packages", ((FocusModSplit)node).serialize());	
 					}
-					nodelist.appendTag(nodenbt);
+					nodelist.add(nodenbt);
 				}			
 			}
 		}
-		nbt.setTag("nodes", nodelist);					
+		nbt.put("nodes", nodelist);					
 		
 		return nbt;
 	}
@@ -214,14 +211,14 @@ public class FocusPackage implements IFocusElement {
 		power *= pow;
 	}
 
-	public FocusPackage copy(EntityLivingBase caster) {
+	public FocusPackage copy(LivingEntity caster) {
 		FocusPackage fp = new FocusPackage(caster);
 		fp.deserialize(serialize());
 		return fp;
 	}
 	
-	public void initialize(EntityLivingBase caster) {
-		world=caster.getEntityWorld();
+	public void initialize(LivingEntity caster) {
+		world=caster.level();
 		IFocusElement node = nodes.get(0);
 		if (node instanceof FocusMediumRoot && ((FocusMediumRoot)node).supplyTargets()==null) {
 			((FocusMediumRoot)node).setupFromCaster(caster);

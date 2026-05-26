@@ -1,9 +1,9 @@
 package thaumcraft.api.research;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.translation.I18n;
+import net.minecraft.resources.Identifier;
+
+import net.minecraft.client.resources.language.I18n;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 
@@ -28,7 +28,7 @@ public class ResearchCategories {
 	 * Must be stored as localization information in the LanguageRegistry.
 	 */
 	public static String getCategoryName(String key) {
-		return I18n.translateToLocal("tc.research_category."+key);
+		return I18n.get("tc.research_category."+key);
 	}
 	
 	/**
@@ -55,7 +55,7 @@ public class ResearchCategories {
 	 * @param background the resource location of the background image to use for this category
 	 * @return the registered category
 	 */
-	public static ResearchCategory registerCategory(String key, String researchkey, AspectList formula, ResourceLocation icon, ResourceLocation background) {
+	public static ResearchCategory registerCategory(String key, String researchkey, AspectList formula, Identifier icon, Identifier background) {
 		if (getResearchCategory(key)==null) {
 			ResearchCategory rl = new ResearchCategory(key,researchkey, formula, icon, background);
 			researchCategories.put(key, rl);
@@ -73,7 +73,7 @@ public class ResearchCategories {
 	 * @param background2 the resource location of the foreground image that lies between the background and icons
 	 * @return the registered category
 	 */
-	public static ResearchCategory registerCategory(String key, String researchkey, AspectList formula, ResourceLocation icon, ResourceLocation background, ResourceLocation background2) {
+	public static ResearchCategory registerCategory(String key, String researchkey, AspectList formula, Identifier icon, Identifier background, Identifier background2) {
 		if (getResearchCategory(key)==null) {
 			ResearchCategory rl = new ResearchCategory(key, researchkey, formula, icon, background, background2);
 			researchCategories.put(key, rl);

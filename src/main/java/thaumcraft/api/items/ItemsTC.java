@@ -1,5 +1,5 @@
 package thaumcraft.api.items;
-import net.minecraft.item.Item;
+import net.minecraft.world.item.Item;
 
 
 public class ItemsTC {

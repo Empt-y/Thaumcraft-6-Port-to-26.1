@@ -1,7 +1,7 @@
 package thaumcraft.api.golems.tasks;
 import java.util.UUID;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.core.BlockPos;
 import thaumcraft.api.golems.GolemHelper;
 import thaumcraft.api.golems.IGolemAPI;
 import thaumcraft.api.golems.ProvisionRequest;
@@ -46,9 +46,9 @@ public class Task {
 		this.sealPos = sealPos;
 		this.entity = entity;
 		if (sealPos==null) {
-			id = (System.currentTimeMillis()+"/ENPOS/"+entity.getEntityId()).hashCode();
+			id = (System.currentTimeMillis()+"/ENPOS/"+entity.getId()).hashCode();
 		} else
-			id = (System.currentTimeMillis()+"/E/"+sealPos.face.toString()+"/"+sealPos.pos.toString()+"/"+entity.getEntityId()).hashCode();
+			id = (System.currentTimeMillis()+"/E/"+sealPos.face.toString()+"/"+sealPos.pos.toString()+"/"+entity.getId()).hashCode();
 		type = 1;
 		lifespan = 300;
 	}	
@@ -79,7 +79,7 @@ public class Task {
 	}
 
 	public BlockPos getPos() {
-		return type==1?entity.getPosition():pos;
+		return type==1?entity.blockPosition():pos;
 	}	
 	
 	public byte getType() {
@@ -138,7 +138,8 @@ public class Task {
 	}
 
 	public boolean canGolemPerformTask(IGolemAPI golem) {
-		ISealEntity se = GolemHelper.getSealEntity(golem.getGolemWorld().provider.getDimension(), sealPos);
+		int dim = (golem.getGolemWorld() instanceof net.minecraft.server.level.ServerLevel sl) ? sl.dimension().identifier().hashCode() : 0;
+		ISealEntity se = GolemHelper.getSealEntity(dim, sealPos);
 		if (se!=null) {
 			if (golem.getGolemColor()>0 && se.getColor()>0 && golem.getGolemColor() != se.getColor()) return false;
 			return se.getSeal().canGolemPerformTask(golem,this);
@@ -166,58 +167,58 @@ public class Task {
 	
 	
 	
-//	public static Task readNBT(NBTTagCompound nbt)
+//	public static Task readNBT(CompoundTag nbt)
 //  {		
 //		Task task = new Task();
-//		task.id = nbt.getInteger("id");
-//		task.type = nbt.getByte("type");		
-//		if (nbt.hasKey("pos", 4)) task.pos = BlockPos.fromLong(nbt.getLong("pos"));	
+//		task.id = nbt.getIntOr("id", 0);
+//		task.type = nbt.getByteOr("type", (byte)0);		
+//		if (nbt.contains("pos", 4)) task.pos = BlockPos.fromLong(nbt.getLongOr("pos", 0L));	
 //		
-//		if (nbt.hasKey("GUUIDMost", 4) && nbt.hasKey("GUUIDLeast", 4))
-//			task.golemUUID = new UUID(nbt.getLong("GUUIDMost"), nbt.getLong("GUUIDLeast"));
+//		if (nbt.contains("GUUIDMost", 4) && nbt.contains("GUUIDLeast", 4))
+//			task.golemUUID = new UUID(nbt.getLongOr("GUUIDMost", 0L), nbt.getLongOr("GUUIDLeast", 0L));
 //		
-//		if (nbt.hasKey("EUUIDMost", 4) && nbt.hasKey("EUUIDLeast", 4))
-//			task.entityUUID = new UUID(nbt.getLong("EUUIDMost"), nbt.getLong("EUUIDLeast"));
+//		if (nbt.contains("EUUIDMost", 4) && nbt.contains("EUUIDLeast", 4))
+//			task.entityUUID = new UUID(nbt.getLongOr("EUUIDMost", 0L), nbt.getLongOr("EUUIDLeast", 0L));
 //		
 //		if (task.pos==null && task.entityUUID==null) return null;
 //		
-//		task.reserved = nbt.getBoolean("reserved");
-//		task.waitOnSuspension = nbt.getBoolean("wos");
+//		task.reserved = nbt.getBooleanOr("reserved", false);
+//		task.waitOnSuspension = nbt.getBooleanOr("wos", false);
 //		task.suspended = false;
-//		task.completed = nbt.getBoolean("completed");
+//		task.completed = nbt.getBooleanOr("completed", false);
 //		task.expireTime = System.currentTimeMillis() + 300000;		
-//		if (nbt.hasKey("sealpos", 10)) {
-//			NBTTagCompound sealpos = nbt.getCompoundTag("sealpos");
-//			SealPos sp = new SealPos(BlockPos.fromLong(nbt.getLong("pos")), EnumFacing.VALUES[nbt.getByte("face")]);
+//		if (nbt.contains("sealpos", 10)) {
+//			CompoundTag sealpos = nbt.getCompoundOrEmpty("sealpos");
+//			SealPos sp = new SealPos(BlockPos.fromLong(nbt.getLongOr("pos", 0L)), Direction.VALUES[nbt.getByteOr("face", (byte)0)]);
 //			TaskHandler.sealTaskCrossRef.put(task.id, sp);
 //		}
 //		return task;
 //  }
 //	
-//	public static NBTTagCompound writeNBT(Task task)
+//	public static CompoundTag writeNBT(Task task)
 //  {
-//		NBTTagCompound nbt = new NBTTagCompound();
-//		nbt.setInteger("id", task.id);
-//		nbt.setByte("type", task.type);
-//		if (task.pos!=null) nbt.setLong("pos", task.pos.toLong());
+//		CompoundTag nbt = new CompoundTag();
+//		nbt.putInt("id", task.id);
+//		nbt.putByte("type", task.type);
+//		if (task.pos!=null) nbt.putLong("pos", task.pos.toLong());
 //		if (task.entity!=null) {
-//			nbt.setLong("EUUIDMost", task.entity.getUniqueID().getMostSignificantBits());
-//          nbt.setLong("EUUIDLeast", task.entity.getUniqueID().getLeastSignificantBits());
+//			nbt.putLong("EUUIDMost", task.entity.getUUID().getMostSignificantBits());
+//          nbt.putLong("EUUIDLeast", task.entity.getUUID().getLeastSignificantBits());
 //		}
 //		if (task.golemUUID!=null) {
-//			nbt.setLong("GUUIDMost", task.golemUUID.getMostSignificantBits());
-//          nbt.setLong("GUUIDLeast", task.golemUUID.getLeastSignificantBits());
+//			nbt.putLong("GUUIDMost", task.golemUUID.getMostSignificantBits());
+//          nbt.putLong("GUUIDLeast", task.golemUUID.getLeastSignificantBits());
 //		}
-//		nbt.setBoolean("reserved", task.reserved);
-//		nbt.setBoolean("wos", task.waitOnSuspension);
-//		nbt.setBoolean("completed", task.completed);
+//		nbt.putBoolean("reserved", task.reserved);
+//		nbt.putBoolean("wos", task.waitOnSuspension);
+//		nbt.putBoolean("completed", task.completed);
 //		
 //		SealPos sp = TaskHandler.sealTaskCrossRef.get(task.getId());
 //		if (sp!=null) {
-//			NBTTagCompound sealpos = new NBTTagCompound();
-//			sealpos.setLong("pos", sp.pos.toLong());
-//			sealpos.setByte("face", (byte) sp.face.ordinal());
-//			nbt.setTag("sealpos", sealpos);
+//			CompoundTag sealpos = new CompoundTag();
+//			sealpos.putLong("pos", sp.pos.toLong());
+//			sealpos.putByte("face", (byte) sp.face.ordinal());
+//			nbt.put("sealpos", sealpos);
 //		}
 //		return nbt;
 //  }

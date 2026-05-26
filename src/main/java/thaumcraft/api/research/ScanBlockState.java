@@ -1,43 +1,43 @@
 package thaumcraft.api.research;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.BlockPos;
 
 
 public class ScanBlockState implements IScanThing {
 	
 	String research;	
-	IBlockState blockState;
+	BlockState blockState;
 	
-	public ScanBlockState(IBlockState blockState) {
+	public ScanBlockState(BlockState blockState) {
 		research = "!"+blockState.toString();
 		this.blockState = blockState;
 	}
 	
-	public ScanBlockState(String research, IBlockState blockState) {
+	public ScanBlockState(String research, BlockState blockState) {
 		this.research = research;
 		this.blockState = blockState;
 	}
 	
-	public ScanBlockState(String research, IBlockState blockState, boolean item) {
+	public ScanBlockState(String research, BlockState blockState, boolean item) {
 		this.research = research;
 		this.blockState = blockState;
 		if (item) 
 			ScanningManager.addScannableThing(new ScanItem(research,
-				new ItemStack(blockState.getBlock(),1,blockState.getBlock().getMetaFromState(blockState))));
+				new ItemStack(blockState.getBlock())));
 	}
 
 	@Override
-	public boolean checkThing(EntityPlayer player, Object obj) {		
-		if (obj!=null && obj instanceof BlockPos && player.world.getBlockState((BlockPos) obj)==blockState) {
+	public boolean checkThing(Player player, Object obj) {		
+		if (obj!=null && obj instanceof BlockPos && player.level().getBlockState((BlockPos) obj)==blockState) {
 				return true;
 		}
 		return false;
 	}
 	
 	@Override
-	public String getResearchKey(EntityPlayer player, Object object) {
+	public String getResearchKey(Player player, Object object) {
 		return research;
 	}
 }

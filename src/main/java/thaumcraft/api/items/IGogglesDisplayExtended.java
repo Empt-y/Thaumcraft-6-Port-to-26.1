@@ -1,5 +1,5 @@
 package thaumcraft.api.items;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.Vec3;
 
 
 /**
@@ -11,7 +11,7 @@ import net.minecraft.util.math.Vec3d;
 public interface IGogglesDisplayExtended {
 	
 	/**
-	 * What text to display onscreen. You can return multiple lines (discretion is advised). 
+	 * What text to display onscreen. You can return multiple lines (discretion is, Object advised). 
 	 * @return
 	 */
 	public String[] getIGogglesText();
@@ -20,8 +20,8 @@ public interface IGogglesDisplayExtended {
 	 * Returns the positional offset that text will be displayed at in relation to the object. 
 	 * @return
 	 */
-	default public Vec3d getIGogglesTextOffset() { 
-		return new Vec3d(0,0,0); 
+	default public Vec3 getIGogglesTextOffset() { 
+		return new Vec3(0,0,0); 
 	}
 
 }

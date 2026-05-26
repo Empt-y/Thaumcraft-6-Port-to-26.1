@@ -1,11 +1,9 @@
 package thaumcraft.api;
 import java.util.Arrays;
 import java.util.HashMap;
-import net.minecraft.block.Block;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.oredict.OreDictionary;
-import net.minecraftforge.registries.GameData;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.resources.Identifier;
 import thaumcraft.api.aspects.AspectEventProxy;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.crafting.CrucibleRecipe;
@@ -46,7 +44,7 @@ public class ThaumcraftApi {
 	 * There is a sample <code>_example.json.txt</code> file in <code>thaumcraft.api.research</code>
 	 * @param loc the resourcelocation of the json file
 	 */
-	public static void registerResearchLocation(ResourceLocation loc) {
+	public static void registerResearchLocation(Identifier loc) {
 		if (!CommonInternals.jsonLocs.containsKey(loc.toString())) {
 			CommonInternals.jsonLocs.put(loc.toString(), loc);
 		}
@@ -82,11 +80,11 @@ public class ThaumcraftApi {
 	}
 		
 	
-	public static HashMap<ResourceLocation, IThaumcraftRecipe> getCraftingRecipes() {
+	public static HashMap<Identifier, IThaumcraftRecipe> getCraftingRecipes() {
 		return CommonInternals.craftingRecipeCatalog;
 	}
 	
-	public static HashMap<ResourceLocation, Object> getCraftingRecipesFake() {
+	public static HashMap<Identifier, Object> getCraftingRecipesFake() {
 		return CommonInternals.craftingRecipeCatalogFake;
 	}
 
@@ -96,7 +94,7 @@ public class ThaumcraftApi {
 	 * @param registry
 	 * @param recipe
 	 */
-	public static void addFakeCraftingRecipe(ResourceLocation registry, Object recipe)
+	public static void addFakeCraftingRecipe(Identifier registry, Object recipe)
     {
 		getCraftingRecipesFake().put(registry, recipe);
     }
@@ -108,7 +106,7 @@ public class ThaumcraftApi {
 	 * Recipes grouped under the same name will be displayed under one bookmark in thaumonomicon.
 	 * @param recipes a matrix of placable objects and what they will turn into
 	 */
-	public static void addMultiblockRecipeToCatalog(ResourceLocation registry, BluePrint recipe) {
+	public static void addMultiblockRecipeToCatalog(Identifier registry, BluePrint recipe) {
 		getCraftingRecipes().put(registry, recipe);
 	}
 	
@@ -163,7 +161,7 @@ public class ThaumcraftApi {
 			return group;
 		}
 		
-		public BluePrint setGroup(ResourceLocation loc) {
+		public BluePrint setGroup(Identifier loc) {
 			group = loc.toString();
 			return this;
 		}
@@ -175,10 +173,10 @@ public class ThaumcraftApi {
 	 * @param @param registry
 	 * @param recipe
 	 */
-	public static void addArcaneCraftingRecipe(ResourceLocation registry, IArcaneRecipe recipe)
+	public static void addArcaneCraftingRecipe(Identifier registry, IArcaneRecipe recipe)
     {		
-		recipe.setRegistryName(registry);
-	    GameData.register_impl(recipe);
+		// TODO: recipe.setRegistryName no longer exists; recipes registered via data-gen or RecipeManager
+	    getCraftingRecipes().put(registry, recipe);
     }
 	
 	/**
@@ -187,7 +185,7 @@ public class ThaumcraftApi {
 	 * @param registry
 	 * @param recipe
 	 */
-	public static void addInfusionCraftingRecipe(ResourceLocation registry, InfusionRecipe recipe)
+	public static void addInfusionCraftingRecipe(Identifier registry, InfusionRecipe recipe)
     {
 		getCraftingRecipes().put(registry, recipe);
     }
@@ -202,7 +200,7 @@ public class ThaumcraftApi {
 		for (Object r:getCraftingRecipes().values()) {
 			if (r instanceof InfusionRecipe) {
 				if (((InfusionRecipe)r).getRecipeOutput() instanceof ItemStack) {
-					if (((ItemStack) ((InfusionRecipe)r).getRecipeOutput()).isItemEqual(res))
+					if (ItemStack.isSameItemSameComponents(((ItemStack) ((InfusionRecipe)r).getRecipeOutput()), res))
 						return ((InfusionRecipe)r);
 				} 				
 			}
@@ -216,7 +214,7 @@ public class ThaumcraftApi {
 	 * @param recipes One or more recipes linked to the unique identifier. 
 	 */
     
-    public static void addCrucibleRecipe(ResourceLocation registry, CrucibleRecipe recipe) {
+    public static void addCrucibleRecipe(Identifier registry, CrucibleRecipe recipe) {
     	getCraftingRecipes().put(registry, recipe);
 	}
 	
@@ -227,7 +225,7 @@ public class ThaumcraftApi {
 	public static CrucibleRecipe getCrucibleRecipe(ItemStack stack) {
 		for (Object r:getCraftingRecipes().values()) {
 			if (r instanceof CrucibleRecipe) {
-				if (((CrucibleRecipe)r).getRecipeOutput().isItemEqual(stack))
+				if (ItemStack.isSameItemSameComponents(((CrucibleRecipe)r).getRecipeOutput(), stack))
 					return ((CrucibleRecipe)r);				
 			}
 		}
@@ -257,27 +255,8 @@ public class ThaumcraftApi {
 	 * @return 
 	 */
 	public static boolean exists(ItemStack item) {
-		ItemStack stack = item.copy();
-		stack.setCount(1);
-		AspectList tmp = CommonInternals.objectTags.get(stack.serializeNBT().toString());
-		if (tmp==null) {
-			try {
-				stack.setItemDamage(OreDictionary.WILDCARD_VALUE);
-				tmp = CommonInternals.objectTags.get(stack.serializeNBT().toString());
-				if (item.getItemDamage()==OreDictionary.WILDCARD_VALUE && tmp==null) {
-					int index=0;
-					do {
-						stack.setItemDamage(index);
-						tmp = CommonInternals.objectTags.get(stack.serializeNBT().toString());
-						index++;
-					} while (index<16 && tmp==null);
-				}
-				if (tmp==null) return false;
-			} catch (Exception e) {
-			}
-		}
-		
-		return true;
+		// TODO: port to modern aspect registry lookup (OreDictionary and ItemStack.serializeNBT removed)
+		return false;
 	}
 	
 	/**
@@ -370,7 +349,7 @@ public class ThaumcraftApi {
 	 * @param nbt you can specify certain nbt keys and their values 
 	 * 			  to differentiate between mobs. <br>For example the normal and wither skeleton:
 	 * 	<br>ThaumcraftApi.registerEntityTag("Skeleton", (new AspectList()).add(Aspect.DEATH, 5));
-	 * 	<br>ThaumcraftApi.registerEntityTag("Skeleton", (new AspectList()).add(Aspect.DEATH, 8), new NBTTagByte("SkeletonType",(byte) 1));
+	 * 	<br>ThaumcraftApi.registerEntityTag("Skeleton", (new AspectList()).add(Aspect.DEATH, 8), new ByteTag("SkeletonType",(byte) 1));
 	 */
 	@Deprecated
 	public static void registerEntityTag(String entityName, AspectList aspects, EntityTagsNBT... nbt ) {
@@ -386,7 +365,7 @@ public class ThaumcraftApi {
 	 * @param amount how much warp is gained
 	 */
 	public static void addWarpToItem(ItemStack craftresult, int amount) {
-		CommonInternals.warpMap.put(Arrays.asList(craftresult.getItem(),craftresult.getItemDamage()),amount);
+		CommonInternals.warpMap.put(Arrays.asList(craftresult.getItem(),craftresult.getDamageValue()),amount);
 	}
 			
 	/**
@@ -396,8 +375,8 @@ public class ThaumcraftApi {
 	 */
 	public static int getWarp(ItemStack in) {
 		if (in==null) return 0;
-		if (in instanceof ItemStack && CommonInternals.warpMap.containsKey(Arrays.asList(in.getItem(),in.getItemDamage()))) {
-			return CommonInternals.warpMap.get(Arrays.asList(in.getItem(),in.getItemDamage()));
+		if (in instanceof ItemStack && CommonInternals.warpMap.containsKey(Arrays.asList(in.getItem(),in.getDamageValue()))) {
+			return CommonInternals.warpMap.get(Arrays.asList(in.getItem(),in.getDamageValue()));
 		} 
 		return 0;
 	}
@@ -440,11 +419,11 @@ public class ThaumcraftApi {
 	 * @param seed
 	 */
 	public static void registerSeed(Block block, ItemStack seed) {
-		CommonInternals.seedList.put(block.getUnlocalizedName(), seed);
+		CommonInternals.seedList.put(block.getDescriptionId(), seed);
 	}
 
 	public static ItemStack getSeed(Block block) {
-		return CommonInternals.seedList.get(block.getUnlocalizedName());
+		return CommonInternals.seedList.get(block.getDescriptionId());
 	}
 		
 		
@@ -541,7 +520,7 @@ public class ThaumcraftApi {
 	/**
 	 * You can whitelist an entity class so it can rarely spawn champion versions in your @Mod.Init method using 
 	 * the "championWhiteList" string message in the format "[Entity]:[level]"
-	 * The entity must extend EntityMob.
+	 * The entity must extend Monster.
 	 * [Entity] is in a similar format to what is used for mob spawners and such (see EntityList.class for vanilla examples).
 	 * The [level] value indicate how rare the champion version will be - the higher the number the more common. 
 	 * The number roughly equals the [n] in 100 chance of a mob being a champion version. 

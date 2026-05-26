@@ -1,25 +1,25 @@
 package thaumcraft.api.golems.parts;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import thaumcraft.api.golems.IGolemAPI;
 
 
 public class PartModel
 {
-    private ResourceLocation objModel;
-    private ResourceLocation texture;
+    private Identifier objModel;
+    private Identifier texture;
     private EnumAttachPoint attachPoint;
     
-    public PartModel(ResourceLocation objModel, ResourceLocation objTexture, EnumAttachPoint attachPoint) {
+    public PartModel(Identifier objModel, Identifier objTexture, EnumAttachPoint attachPoint) {
         this.objModel = objModel;
         texture = objTexture;
         this.attachPoint = attachPoint;
     }
     
-    public ResourceLocation getObjModel() {
+    public Identifier getObjModel() {
         return objModel;
     }
     
-    public ResourceLocation getTexture() {
+    public Identifier getTexture() {
         return texture;
     }
     

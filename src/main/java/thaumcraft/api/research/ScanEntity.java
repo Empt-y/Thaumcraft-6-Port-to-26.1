@@ -1,9 +1,7 @@
 package thaumcraft.api.research;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import thaumcraft.api.ThaumcraftApi.EntityTagsNBT;
-import thaumcraft.api.ThaumcraftApiHelper;
 
 
 public class ScanEntity implements IScanThing {
@@ -31,26 +29,17 @@ public class ScanEntity implements IScanThing {
 	}
 
 	@Override
-	public boolean checkThing(EntityPlayer player, Object obj) {		
+	public boolean checkThing(Player player, Object obj) {		
 		if (obj!=null && ((!inheritedClasses && entityClass==obj.getClass()) || 
 				(inheritedClasses && entityClass.isInstance(obj)))) {			
-			if (NBTData!=null && NBTData.length>0) {
-				boolean b = true;
-				NBTTagCompound tc = new NBTTagCompound();
-				((Entity)obj).writeToNBT(tc);
-				for (EntityTagsNBT nbt:NBTData) {
-					if (!tc.hasKey(nbt.name) || !ThaumcraftApiHelper.getNBTDataFromId(tc, tc.getTagId(nbt.name), nbt.name).equals(nbt.value)) {
-						return false;
-					} 					
-				} 			
-			} 			
+			// NBT entity scanning not supported in MC 26 (Entity.save uses ValueOutput, not CompoundTag)			
 			return true;
 		}
 		return false;
 	}
 
 	@Override
-	public String getResearchKey(EntityPlayer player, Object object) {
+	public String getResearchKey(Player player, Object object) {
 		return research;
 	}
 	

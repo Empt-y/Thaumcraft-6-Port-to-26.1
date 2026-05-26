@@ -1,43 +1,21 @@
 package thaumcraft.api.potions;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.potion.Potion;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
 
 
-public class PotionVisExhaust extends Potion
+public class PotionVisExhaust extends MobEffect
 {
-    public static Potion instance = null; // will be instantiated at runtime
-    private int statusIconIndex = -1;
-    
-    public PotionVisExhaust(boolean par2, int par3)
-    {
-    	super(par2,par3);
-    	setIconIndex(5, 1);
-    	setPotionName("potion.vis_exhaust");
-    	setEffectiveness(0.25D);
-    }
-    
-	@Override
-	public boolean isBadEffect() {
-		return true;
-	}
+    public static MobEffect instance = null;
 
-	@Override
-	@SideOnly(Side.CLIENT)
-	public int getStatusIconIndex() {
-		Minecraft.getMinecraft().renderEngine.bindTexture(rl);
-		return super.getStatusIconIndex();
-	}
-	
-	static ResourceLocation rl = new ResourceLocation("thaumcraft","textures/misc/potions.png");
-	
-	@Override
-	public void performEffect(EntityLivingBase target, int par2) {
-		
-	}
-    
-    
+    public PotionVisExhaust()
+    {
+        super(MobEffectCategory.HARMFUL, 0x6A0DAD);
+    }
+
+    @Override
+    public boolean applyEffectTick(ServerLevel level, LivingEntity target, int amplifier) {
+        return true;
+    }
 }

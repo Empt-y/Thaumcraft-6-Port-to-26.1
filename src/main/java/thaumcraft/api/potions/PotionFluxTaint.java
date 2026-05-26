@@ -1,66 +1,39 @@
 package thaumcraft.api.potions;
-import net.minecraft.client.Minecraft;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.ai.attributes.IAttributeInstance;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.potion.Potion;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-import thaumcraft.api.ThaumcraftApiHelper;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
 import thaumcraft.api.damagesource.DamageSourceThaumcraft;
 import thaumcraft.api.entities.ITaintedMob;
 
 
-public class PotionFluxTaint extends Potion
+public class PotionFluxTaint extends MobEffect
 {
-    public static Potion instance = null; // will be instantiated at runtime
-    private int statusIconIndex = -1;
-    
-    public PotionFluxTaint(boolean par2, int par3)
-    {
-    	super(par2,par3);
-    	setIconIndex(3, 1);
-    	setEffectiveness(0.25D);
-    	setPotionName("potion.flux_taint");
-    }
-    
-	@Override
-	public boolean isBadEffect() {
-		return true;
-	}
+    public static MobEffect instance = null;
 
-	@Override
-	@SideOnly(Side.CLIENT)
-	public int getStatusIconIndex() {
-		Minecraft.getMinecraft().renderEngine.bindTexture(rl);
-		return super.getStatusIconIndex();
-	}
-	
-	static ResourceLocation rl = new ResourceLocation("thaumcraft","textures/misc/potions.png");
-	
-	@Override
-	public void performEffect(EntityLivingBase target, int strength) {
-		IAttributeInstance cai = target.getEntityAttribute(ThaumcraftApiHelper.CHAMPION_MOD);
-		if (target instanceof ITaintedMob || (cai!=null && (int) cai.getAttributeValue() == 13)) {
-			target.heal(1);
-		} else {
-			if (!target.isEntityUndead() && !(target instanceof EntityPlayer))
-	        {
-				target.attackEntityFrom(DamageSourceThaumcraft.taint, 1);		
-	        } 
-			else
-			if (!target.isEntityUndead() && (target.getMaxHealth() > 1 || (target instanceof EntityPlayer)))
-	        {
-				target.attackEntityFrom(DamageSourceThaumcraft.taint, 1);
-	        } 
-		}
-	}
-    
-	public boolean isReady(int par1, int par2)
+    public PotionFluxTaint()
     {
-		int k = 40 >> par2;
-        return k > 0 ? par1 % k == 0 : true;
+        super(MobEffectCategory.HARMFUL, 0x228B22);
     }
-    
+
+    @Override
+    public boolean applyEffectTick(ServerLevel level, LivingEntity target, int strength) {
+        if (target instanceof ITaintedMob) {
+            target.heal(1);
+        } else {
+            if (!target.isInvertedHealAndHarm() && !(target instanceof Player)) {
+                target.hurtServer(level, DamageSourceThaumcraft.taint(level), 1);
+            } else if (!target.isInvertedHealAndHarm() && (target.getMaxHealth() > 1 || (target instanceof Player))) {
+                target.hurtServer(level, DamageSourceThaumcraft.taint(level), 1);
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
+        int k = 40 >> amplifier;
+        return k > 0 ? duration % k == 0 : true;
+    }
 }

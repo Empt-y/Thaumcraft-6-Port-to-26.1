@@ -1,6 +1,6 @@
 package thaumcraft.api.items;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 
 /**
@@ -20,7 +20,7 @@ public interface IWarpingGear {
 	/**
 	 * returns how much warp this item adds while worn or held. 
 	 */
-	public int getWarp(ItemStack itemstack, EntityPlayer player);
+	public int getWarp(ItemStack itemstack, Player player);
 	
 
 }

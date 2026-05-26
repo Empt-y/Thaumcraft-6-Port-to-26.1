@@ -1,24 +1,21 @@
 package thaumcraft.api;
-import java.util.Iterator;
+import net.minecraft.world.Container;
 import java.util.List;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.ISidedInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.ItemHandlerHelper;
-import net.minecraftforge.items.VanillaInventoryCodeHooks;
-import net.minecraftforge.items.wrapper.InvWrapper;
-import net.minecraftforge.items.wrapper.SidedInvWrapper;
-import net.minecraftforge.oredict.OreDictionary;
-import org.apache.commons.lang3.tuple.Pair;
+import net.minecraft.world.WorldlyContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.wrapper.InvWrapper;
+import net.neoforged.neoforge.items.wrapper.SidedInvWrapper;
 import thaumcraft.common.lib.utils.InventoryUtils;
-
-
 
 
 public class ThaumcraftInvHelper {
@@ -29,190 +26,160 @@ public class ThaumcraftInvHelper {
 		public boolean useOre;
 		public boolean useMod;
 		public boolean relaxedNBT = false;
-	
+
 		public InvFilter(boolean ignoreDamage, boolean ignoreNBT, boolean useOre, boolean useMod) {
 			igDmg = ignoreDamage;
 			igNBT = ignoreNBT;
 			this.useOre = useOre;
 			this.useMod = useMod;
-		}		
-		
+		}
+
 		public InvFilter setRelaxedNBT() {
 			relaxedNBT = true;
 			return this;
 		}
-		
-		public static InvFilter STRICT = new InvFilter(false,false,false,false);
-		public static InvFilter BASEORE = new InvFilter(false,false,true,false);
+
+		public static InvFilter STRICT = new InvFilter(false, false, false, false);
+		public static InvFilter BASEORE = new InvFilter(false, false, true, false);
 	}
 
-	public static IItemHandler getItemHandlerAt(World world, BlockPos pos, EnumFacing side) {
-		Pair<IItemHandler, Object> dest = VanillaInventoryCodeHooks.getItemHandler(world, pos.getX(), pos.getY(), pos.getZ(), side);
-		if (dest!=null && dest.getLeft()!=null) {
-			return dest.getLeft();
-		} else {
-			TileEntity tileentity = world.getTileEntity(pos);
-	        if (tileentity != null && tileentity instanceof IInventory) {            	
-	        	return wrapInventory ((IInventory) tileentity, side);
-	        }
+	public static IItemHandler getItemHandlerAt(Level world, BlockPos pos, Direction side) {
+		var raw = Capabilities.Item.BLOCK.getCapability(world, pos, world.getBlockState(pos), world.getBlockEntity(pos), side);
+		if (raw != null) return IItemHandler.of(raw);
+		BlockEntity te = world.getBlockEntity(pos);
+		if (te instanceof Container inv) {
+			return wrapInventory(inv, side);
 		}
 		return null;
 	}
 
-	public static IItemHandler wrapInventory(IInventory inventory, EnumFacing side) {
-		return inventory instanceof ISidedInventory? new SidedInvWrapper((ISidedInventory) inventory, side) : new InvWrapper(inventory);
+	public static IItemHandler wrapInventory(Container inventory, Direction side) {
+		return inventory instanceof WorldlyContainer sided
+			? new SidedInvWrapper(sided, side)
+			: new InvWrapper(inventory);
 	}
 
-	/**
-		 * Unlike the normal nbt comparison used by itemstacks, this method only checks if all the tags in stackA is present and equal in stackB. Any extra tags in stackB is ignored. 
-		 * Some mods love adding their own nbt data to itemstacks which ends up breaking a lot of crafting recipes or similar checks
-		 * This version of the check ignores capabilities as this method is primarily used on my side by things that do not have capabilities in any case.
-		 * @param prime
-		 * @param other
-		 * @return
-		 */	
-		public static boolean areItemStackTagsEqualRelaxed(ItemStack prime, ItemStack other) {
-			if (prime.isEmpty() && other.isEmpty())
-		    {
-		        return true;
-		    }
-		    else if (!prime.isEmpty() && !other.isEmpty())
-		    {
-	//	        if (prime.getTagCompound() == null && other.getTagCompound() != null)
-	//	        {
-	//	            return false;
-	//	        }
-	//	        else
-	//	        {
-		            return (prime.getTagCompound() == null || ThaumcraftInvHelper.compareTagsRelaxed(prime.getTagCompound(),other.getTagCompound()));
-	//	        }
-		    }
-		    else
-		    {
-		        return false;
-		    }
-		}
-
-	public static boolean compareTagsRelaxed(NBTTagCompound prime, NBTTagCompound other) {
-		for (String key : prime.getKeySet()) {			
-			if (!other.hasKey(key) || !prime.getTag(key).equals(other.getTag(key))) {
-				return false;
-			}
-		}		
-		return true;
+	private static CompoundTag getCustomTag(ItemStack stack) {
+		CustomData cd = stack.get(DataComponents.CUSTOM_DATA);
+		return cd != null ? cd.copyTag() : null;
 	}
 
-	public static boolean areItemStacksEqualForCrafting(ItemStack stack0, Object in)
-	{
-		if (stack0==null && in!=null) return false;
-		if (stack0!=null && in==null) return false;
-		if (stack0==null && in==null) return true;
-		
-		if (in instanceof Object[]) return true;
-		
-		if (in instanceof String) {
-			List<ItemStack> l = OreDictionary.getOres((String) in,false);
-			return ThaumcraftInvHelper.containsMatch(false, new ItemStack[]{stack0}, l);
+	public static boolean areItemStackTagsEqualRelaxed(ItemStack prime, ItemStack other) {
+		if (prime.isEmpty() && other.isEmpty()) return true;
+		if (!prime.isEmpty() && !other.isEmpty()) {
+			CompoundTag primeTag = getCustomTag(prime);
+			CompoundTag otherTag = getCustomTag(other);
+			return (primeTag == null || compareTagsRelaxed(primeTag, otherTag));
 		}
-		
-		if (in instanceof ItemStack) {
-			//nbt
-			boolean t1= !stack0.hasTagCompound() || ThaumcraftInvHelper.areItemStackTagsEqualForCrafting(stack0, (ItemStack) in);		
-			if (!t1) return false;	
-	        return OreDictionary.itemMatches((ItemStack) in, stack0, false);
-		}
-		
 		return false;
 	}
 
-	public static boolean containsMatch(boolean strict, ItemStack[] inputs, List<ItemStack> targets)
-	{
-	    for (ItemStack input : inputs)
-	    {
-	        for (ItemStack target : targets)
-	        {
-	            if (OreDictionary.itemMatches(target, input, strict) && ItemStack.areItemStackTagsEqual(target, input))
-	            {
-	                return true;
-	            }
-	        }
-	    }
-	    return false;
+	public static boolean compareTagsRelaxed(CompoundTag prime, CompoundTag other) {
+		if (prime == null) return true;
+		if (other == null) return false;
+		for (String key : prime.keySet()) {
+			if (!other.contains(key) || !prime.get(key).equals(other.get(key))) {
+				return false;
+			}
+		}
+		return true;
 	}
 
-	public static boolean areItemsEqual(ItemStack s1,ItemStack s2)
-	{
-		if (s1.isItemStackDamageable() && s2.isItemStackDamageable())
-		{
+	public static boolean areItemStacksEqualForCrafting(ItemStack stack0, Object in) {
+		if (stack0 == null && in != null) return false;
+		if (stack0 != null && in == null) return false;
+		if (stack0 == null) return true;
+
+		if (in instanceof Object[]) return true;
+
+		// TODO: replace String ore-dict check with tag-based matching
+		if (in instanceof String) return false;
+
+		if (in instanceof ItemStack target) {
+			boolean t1 = !stack0.has(DataComponents.CUSTOM_DATA) || areItemStackTagsEqualForCrafting(stack0, target);
+			if (!t1) return false;
+			return ItemStack.isSameItem(target, stack0);
+		}
+
+		return false;
+	}
+
+	public static boolean containsMatch(boolean strict, ItemStack[] inputs, List<ItemStack> targets) {
+		for (ItemStack input : inputs) {
+			for (ItemStack target : targets) {
+				if (ItemStack.isSameItem(target, input) &&
+					(!strict || ItemStack.isSameItemSameComponents(target, input))) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	public static boolean areItemsEqual(ItemStack s1, ItemStack s2) {
+		if (s1.isDamageableItem() && s2.isDamageableItem()) {
 			return s1.getItem() == s2.getItem();
-		} else
-			return s1.getItem() == s2.getItem() && s1.getItemDamage() == s2.getItemDamage();
+		} else {
+			return s1.getItem() == s2.getItem() && s1.getDamageValue() == s2.getDamageValue();
+		}
 	}
 
-	public static boolean areItemStackTagsEqualForCrafting(ItemStack slotItem,ItemStack recipeItem)
-	{
+	public static boolean areItemStackTagsEqualForCrafting(ItemStack slotItem, ItemStack recipeItem) {
 		if (recipeItem == null || slotItem == null) return false;
-		if (recipeItem.getTagCompound()!=null && slotItem.getTagCompound()==null ) return false;
-		if (recipeItem.getTagCompound()==null ) return true;
-		
-		Iterator iterator = recipeItem.getTagCompound().getKeySet().iterator();
-	    while (iterator.hasNext())
-	    {
-	        String s = (String)iterator.next();
-	        if (slotItem.getTagCompound().hasKey(s)) {
-	        	if (!slotItem.getTagCompound().getTag(s).toString().equals(
-	        			recipeItem.getTagCompound().getTag(s).toString())) {
-	        		return false;
-	        	}
-	        } else {
-	    		return false;
-	        }
-	        
-	    }
-	    return true;
+		CompoundTag recipeTag = getCustomTag(recipeItem);
+		CompoundTag slotTag = getCustomTag(slotItem);
+		if (recipeTag != null && slotTag == null) return false;
+		if (recipeTag == null) return true;
+
+		for (String s : recipeTag.keySet()) {
+			if (!slotTag.contains(s)) return false;
+			if (!slotTag.get(s).toString().equals(recipeTag.get(s).toString())) {
+				return false;
+			}
+		}
+		return true;
 	}
 
-	public static ItemStack insertStackAt(World world, BlockPos pos, EnumFacing side, ItemStack stack, boolean simulate)
-	{		
-		IItemHandler inventory = getItemHandlerAt(world,pos,side); 		
-		if (inventory!=null) {			
+	public static ItemStack insertStackAt(Level world, BlockPos pos, Direction side, ItemStack stack, boolean simulate) {
+		IItemHandler inventory = getItemHandlerAt(world, pos, side);
+		if (inventory != null) {
 			return ItemHandlerHelper.insertItemStacked(inventory, stack, simulate);
 		}
 		return stack;
 	}
-	
-	public static ItemStack hasRoomFor(World world, BlockPos pos, EnumFacing side, ItemStack stack) {
+
+	public static ItemStack hasRoomFor(Level world, BlockPos pos, Direction side, ItemStack stack) {
 		ItemStack testStack = insertStackAt(world, pos, side, stack.copy(), true);
 		if (testStack.isEmpty()) {
 			return stack.copy();
 		}
-		testStack.setCount(stack.getCount() - testStack.getCount()); 
+		testStack.setCount(stack.getCount() - testStack.getCount());
 		return testStack;
 	}
 
-	public static boolean hasRoomForSome(World world, BlockPos pos, EnumFacing side, ItemStack stack) {
+	public static boolean hasRoomForSome(Level world, BlockPos pos, Direction side, ItemStack stack) {
 		ItemStack testStack = insertStackAt(world, pos, side, stack.copy(), true);
-		return stack.getCount()==0 || testStack.getCount()!=stack.getCount();
+		return stack.getCount() == 0 || testStack.getCount() != stack.getCount();
 	}
-	
-	public static boolean hasRoomForAll(World world, BlockPos pos, EnumFacing side, ItemStack stack) {
+
+	public static boolean hasRoomForAll(Level world, BlockPos pos, Direction side, ItemStack stack) {
 		return insertStackAt(world, pos, side, stack.copy(), true).isEmpty();
 	}
 
 	public static int countTotalItemsIn(IItemHandler inventory, ItemStack stack, InvFilter filter) {
-		int count = 0;    	
-		if (inventory!=null) {			
-			for (int a=0;a<inventory.getSlots();a++) {
-	    		if (InventoryUtils.areItemStacksEqual(stack,inventory.getStackInSlot(a),filter)) {
-	    			count+=inventory.getStackInSlot(a).getCount();
-	    		}
-	    	}    	
-		}    	
+		int count = 0;
+		if (inventory != null) {
+			for (int a = 0; a < inventory.getSlots(); a++) {
+				if (InventoryUtils.areItemStacksEqual(stack, inventory.getStackInSlot(a), filter)) {
+					count += inventory.getStackInSlot(a).getCount();
+				}
+			}
+		}
 		return count;
 	}
 
-	public static int countTotalItemsIn(World world, BlockPos pos, EnumFacing side, ItemStack stack, InvFilter filter) {
-		return countTotalItemsIn(getItemHandlerAt(world,pos,side),stack,filter);
+	public static int countTotalItemsIn(Level world, BlockPos pos, Direction side, ItemStack stack, InvFilter filter) {
+		return countTotalItemsIn(getItemHandlerAt(world, pos, side), stack, filter);
 	}
 
 }

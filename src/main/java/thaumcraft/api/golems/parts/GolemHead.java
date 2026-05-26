@@ -1,6 +1,6 @@
 package thaumcraft.api.golems.parts;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.translation.I18n;
+import net.minecraft.resources.Identifier;
+import net.minecraft.client.resources.language.I18n;
 import thaumcraft.api.golems.EnumGolemTrait;
 
 
@@ -10,14 +10,14 @@ public class GolemHead
     public byte id;
     public String key;
     public String[] research;
-    public ResourceLocation icon;
+    public Identifier icon;
     public Object[] components;
     public EnumGolemTrait[] traits;
     public IHeadFunction function;
     public PartModel model;
     private static byte lastID;
     
-    public GolemHead(String key, String[] research, ResourceLocation icon, PartModel model, Object[] comp, EnumGolemTrait[] tags) {
+    public GolemHead(String key, String[] research, Identifier icon, PartModel model, Object[] comp, EnumGolemTrait[] tags) {
         this.key = key;
         this.research = research;
         this.icon = icon;
@@ -27,7 +27,7 @@ public class GolemHead
         function = null;
     }
     
-    public GolemHead(String key, String[] research, ResourceLocation icon, PartModel model, Object[] comp, IHeadFunction function, EnumGolemTrait[] tags) {
+    public GolemHead(String key, String[] research, Identifier icon, PartModel model, Object[] comp, IHeadFunction function, EnumGolemTrait[] tags) {
         this(key, research, icon, model, comp, tags);
         this.function = function;
     }
@@ -44,11 +44,11 @@ public class GolemHead
     }
     
     public String getLocalizedName() {
-        return I18n.translateToLocal("golem.head." + key.toLowerCase());
+        return I18n.get("golem.head." + key.toLowerCase());
     }
     
     public String getLocalizedDescription() {
-        return I18n.translateToLocal("golem.head.text." + key.toLowerCase());
+        return I18n.get("golem.head.text." + key.toLowerCase());
     }
     
     public static GolemHead[] getHeads() {

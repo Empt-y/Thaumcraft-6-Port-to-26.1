@@ -1,6 +1,6 @@
 package thaumcraft.api.research.theorycraft;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.chat.Component;
 
 
 public class CardBalance extends TheorycraftCard {
@@ -12,16 +12,16 @@ public class CardBalance extends TheorycraftCard {
 		
 	@Override
 	public String getLocalizedName() {
-		return new TextComponentTranslation("card.balance.name").getUnformattedText();
+		return Component.translatable("card.balance.name").getString();
 	}
 	
 	@Override
 	public String getLocalizedText() {
-		return new TextComponentTranslation("card.balance.text").getUnformattedText();
+		return Component.translatable("card.balance.text").getString();
 	}
 	
 	@Override
-	public boolean initialize(EntityPlayer player, ResearchTableData data) {
+	public boolean initialize(Player player, ResearchTableData data) {
 		int total=0;
 		int size=0;
 		for (String c:data.categoryTotals.keySet()) {
@@ -33,7 +33,7 @@ public class CardBalance extends TheorycraftCard {
 	}
 
 	@Override
-	public boolean activate(EntityPlayer player, ResearchTableData data) {
+	public boolean activate(Player player, ResearchTableData data) {
 		int total=0;
 		int size=0;
 		for (String c:data.categoryTotals.keySet()) {

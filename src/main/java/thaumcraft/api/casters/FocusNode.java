@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
-import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.world.phys.HitResult;
 import thaumcraft.api.aspects.Aspect;
 
 
@@ -44,7 +44,7 @@ public abstract class FocusNode implements IFocusElement {
 	}
 	
 	
-	public RayTraceResult[] supplyTargets() { return null;}	
+	public HitResult[] supplyTargets() { return null;}	
 	
 	public Trajectory[] supplyTrajectories() { return null;}
 	

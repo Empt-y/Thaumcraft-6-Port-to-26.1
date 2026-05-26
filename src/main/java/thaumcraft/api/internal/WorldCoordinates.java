@@ -1,7 +1,7 @@
 package thaumcraft.api.internal;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.core.BlockPos;
 
 
 public class WorldCoordinates implements Comparable
@@ -18,10 +18,10 @@ public class WorldCoordinates implements Comparable
         dim = d;
     }
     
-    public WorldCoordinates(TileEntity tile)
+    public WorldCoordinates(BlockEntity tile)
     {
-        pos = tile.getPos();
-        dim = tile.getWorld().provider.getDimension();
+        pos = tile.getBlockPos();
+        dim = tile.getLevel() != null ? tile.getLevel().dimension().identifier().hashCode() : 0;
     }
 
     public WorldCoordinates(WorldCoordinates par1ChunkCoordinates)
@@ -67,7 +67,7 @@ public class WorldCoordinates implements Comparable
      */
     public double getDistanceSquared(BlockPos pos)
     {
-        return this.pos.distanceSq(pos);
+        return this.pos.distSqr(pos);
     }
 
     /**
@@ -83,19 +83,19 @@ public class WorldCoordinates implements Comparable
         return compareWorldCoordinate((WorldCoordinates)par1Obj);
     }
     
-    public void readNBT(NBTTagCompound nbt) {
-    	int x = nbt.getInteger("w_x");
-    	int y = nbt.getInteger("w_y");
-    	int z = nbt.getInteger("w_z");
+    public void readNBT(CompoundTag nbt) {
+    	int x = nbt.getIntOr("w_x", 0);
+    	int y = nbt.getIntOr("w_y", 0);
+    	int z = nbt.getIntOr("w_z", 0);
     	pos = new BlockPos(x,y,z);
-    	dim = nbt.getInteger("w_d");
+    	dim = nbt.getIntOr("w_d", 0);
     }
     
-    public void writeNBT(NBTTagCompound nbt) {
-    	nbt.setInteger("w_x",pos.getX());
-    	nbt.setInteger("w_y",pos.getY());
-    	nbt.setInteger("w_z",pos.getZ());
-    	nbt.setInteger("w_d",dim);
+    public void writeNBT(CompoundTag nbt) {
+    	nbt.putInt("w_x",pos.getX());
+    	nbt.putInt("w_y",pos.getY());
+    	nbt.putInt("w_z",pos.getZ());
+    	nbt.putInt("w_d",dim);
     }
     
 }

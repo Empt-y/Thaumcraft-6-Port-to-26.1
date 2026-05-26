@@ -1,7 +1,7 @@
 package thaumcraft.api.research;
 import java.util.Arrays;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.text.translation.I18n;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.client.resources.language.I18n;
 import thaumcraft.api.research.ResearchStage.Knowledge;
 
 
@@ -126,7 +126,7 @@ public class ResearchEntry
 	 * @return the name
 	 */
 	public String getLocalizedName() {
-		return I18n.translateToLocal(getName());
+		return I18n.get(getName());
 	}
 
 	/**
